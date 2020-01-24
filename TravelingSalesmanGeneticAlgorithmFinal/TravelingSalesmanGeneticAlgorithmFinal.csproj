@@ -41,7 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GraphMatrix.cs" />
+    <Compile Include="Landmark.cs" />
+    <Compile Include="LandmarkDatabase.cs" />
     <Compile Include="Path.cs" />
     <Compile Include="Population.cs" />
     <Compile Include="Program.cs" />

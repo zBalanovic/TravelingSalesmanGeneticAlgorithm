@@ -15,21 +15,16 @@ namespace TravelingSalesmanGeneticAlgorithm
 
     class Population
     {
-        public GraphMatrix GraphOfCities { get; set; }
         public BestPath bestPath { get; set; }
         public int NmbrOfGenerations { get; set; }
         public int CurrentGeneration { get; set; }
         public double MutationRate { get; set; }
         public int NmbrOfPaths { get; set; }
-        public int NmbrOfCities { get; set; }
         public List<Path> Paths { get; set; }
-
         public List<Path> MatingPool { get; set; }
-        public Population(int nmbrOfPaths, int nmbrOfCities, double mutationRate, int nmbrOfGenerations)
+
+        public Population(int nmbrOfPaths, double mutationRate, int nmbrOfGenerations, List<Landmark> landmarks)
         {
-            this.GraphOfCities = new GraphMatrix(nmbrOfCities);
-            this.GraphOfCities.InitializeState();
-            this.NmbrOfCities = nmbrOfCities;
             this.NmbrOfPaths = nmbrOfPaths;
             this.MutationRate = mutationRate;
             this.NmbrOfGenerations = nmbrOfGenerations;
@@ -37,18 +32,17 @@ namespace TravelingSalesmanGeneticAlgorithm
             this.bestPath = new BestPath();
             Paths = new List<Path>(nmbrOfPaths);
             this.MatingPool = new List<Path>();
-            this.InitializePaths();
-        }
-        void InitializePaths()
+            this.InitializePaths(landmarks, landmarks.Count());
+        } 
+        void InitializePaths(List<Landmark> landmarks, int nmbrOfLandmarks)
         {
             for (int i = 0; i < this.NmbrOfPaths; i++)
             {
-                Path tmp = new Path(this.NmbrOfCities, this.GraphOfCities);
+                Path tmp = new Path(nmbrOfLandmarks, landmarks);
                 tmp.InitializePath();
                 Paths.Add(tmp);
             }
         }
-
         public void EvalPathsFitness()
         {
             double max = this.bestPath.Path != null ? this.bestPath.Path.Fitness : 0;
@@ -62,7 +56,6 @@ namespace TravelingSalesmanGeneticAlgorithm
                 }
             }
         }
-
         public void CreateMatingPool()
         {
             double sumOfFitness = 0;
@@ -80,7 +73,6 @@ namespace TravelingSalesmanGeneticAlgorithm
                 }
             }
         }
-
         public void Reproduction()
         {
             Random r = new Random((int)DateTime.Now.Ticks);
@@ -97,18 +89,16 @@ namespace TravelingSalesmanGeneticAlgorithm
             this.Paths[0] = bestPath.Path;
             this.CurrentGeneration++;
         }
-
-        public bool Evolve()
+        public void Evolve()
         {
-            this.EvalPathsFitness();
-            this.CreateMatingPool();
-            this.Reproduction();
-            this.PrintBestPath();
-            if (this.CurrentGeneration > this.NmbrOfGenerations)
+            while (this.CurrentGeneration <= this.NmbrOfGenerations)
             {
-                return false;
+                this.EvalPathsFitness();
+                this.CreateMatingPool();
+                this.Reproduction();
+                this.PrintBestPath();
             }
-            return true;
+
         }
         public void PrintBestPath()
         {

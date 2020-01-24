@@ -7,21 +7,20 @@ namespace TravelingSalesmanGeneticAlgorithm
 {
     class Path
     {
-        public GraphMatrix Graph { get; set; }
+        public List<Landmark> Landmarks { get; set; }
         public int[] OrderOfTraverse { get; set; }
-        public int NmbrOfCities { get; set; }
+        public int NmbrOfLandmarks { get; set; }
         public double Fitness { get; set; }
-        //public int probabilityOfSuccess { get; set; } //in percentage
 
-        public Path(int nmbrOfCities, GraphMatrix graph)
+        public Path(int nmbrOfLandmarks, List<Landmark> landmarks)
         {
-            this.OrderOfTraverse = new int[nmbrOfCities];
-            for (int i = 0; i < nmbrOfCities; i++)
+            this.OrderOfTraverse = new int[nmbrOfLandmarks];
+            for (int i = 0; i < nmbrOfLandmarks; i++)
             {
                 this.OrderOfTraverse[i] = -1;
             }
-            this.NmbrOfCities = nmbrOfCities;
-            this.Graph = graph;
+            this.NmbrOfLandmarks = nmbrOfLandmarks;
+            this.Landmarks = landmarks;
         }
 
         public void InitializePath()
@@ -33,7 +32,7 @@ namespace TravelingSalesmanGeneticAlgorithm
             int nextCity = 1;
             while (!isDone)
             {
-                int index = r.Next(1, NmbrOfCities);
+                int index = r.Next(1, this.NmbrOfLandmarks);
 
                 if (this.OrderOfTraverse[index] != -1)
                 {
@@ -41,7 +40,7 @@ namespace TravelingSalesmanGeneticAlgorithm
                 }
                 this.OrderOfTraverse[index] = nextCity;
                 nextCity++;
-                if (nextCity == this.NmbrOfCities)
+                if (nextCity == this.NmbrOfLandmarks)
                 {
                     isDone = true;
                 }
@@ -50,25 +49,25 @@ namespace TravelingSalesmanGeneticAlgorithm
 
         public void EvalFitness()
         {
-            int totalCost = 0;
-            for (int i = 0; i < this.NmbrOfCities - 1; i++)
+            double totalCost = 0.0;
+            for (int i = 0; i < this.NmbrOfLandmarks - 1; i++)
             {
                 int x = this.OrderOfTraverse[i];
                 int y = this.OrderOfTraverse[i + 1];
-                totalCost += this.Graph.Matrix[x][y];
+                totalCost += this.Landmarks[x].GetDistanceTo(this.Landmarks[y]);
             }
-            int xx = this.OrderOfTraverse[this.NmbrOfCities - 1];
-            totalCost += this.Graph.Matrix[xx][0];
+            int xx = this.OrderOfTraverse[this.NmbrOfLandmarks - 1];
+            totalCost += this.Landmarks[xx].GetDistanceTo(this.Landmarks[0]);
             if (totalCost == 0)
             {
                 throw new System.InvalidOperationException("TotalCost cannot be 0");
             }
-            this.Fitness = 1 / (double)totalCost;
+            this.Fitness = 1 / totalCost;
         }
 
         bool Exists(int element)
         {
-            for (int i = 0; i < this.NmbrOfCities; i++)
+            for (int i = 0; i < this.NmbrOfLandmarks; i++)
             {
                 if (this.OrderOfTraverse[i] == element)
                 {
@@ -82,8 +81,8 @@ namespace TravelingSalesmanGeneticAlgorithm
             Random r = new Random((int)DateTime.Now.Ticks);
             if (r.NextDouble() < mutationRate)
             {
-                int i = r.Next(1, NmbrOfCities - 1);
-                int j = r.Next(1, NmbrOfCities - 1);
+                int i = r.Next(1, NmbrOfLandmarks - 1);
+                int j = r.Next(1, NmbrOfLandmarks - 1);
                 int tmp = this.OrderOfTraverse[i];
                 this.OrderOfTraverse[i] = this.OrderOfTraverse[j];
                 this.OrderOfTraverse[j] = tmp;
@@ -95,10 +94,10 @@ namespace TravelingSalesmanGeneticAlgorithm
         {
             Random r = new Random((int)DateTime.Now.Ticks);
             Path[] offsprings = new Path[2];
-            int crosspoint1 = r.Next(1, this.NmbrOfCities / 2);
-            int crosspoint2 = r.Next(crosspoint1, this.NmbrOfCities);
-            Path offspring1 = new Path(this.NmbrOfCities, this.Graph);
-            Path offspring2 = new Path(this.NmbrOfCities, this.Graph);
+            int crosspoint1 = r.Next(1, this.NmbrOfLandmarks / 2);
+            int crosspoint2 = r.Next(crosspoint1, this.NmbrOfLandmarks);
+            Path offspring1 = new Path(this.NmbrOfLandmarks, this.Landmarks);
+            Path offspring2 = new Path(this.NmbrOfLandmarks, this.Landmarks);
             offsprings[0] = offspring1;
             offsprings[1] = offspring2;
             for (int i = 0; i < crosspoint1; i++)
@@ -106,7 +105,7 @@ namespace TravelingSalesmanGeneticAlgorithm
                 offspring1.OrderOfTraverse[i] = this.OrderOfTraverse[i];
                 offspring2.OrderOfTraverse[i] = parent2.OrderOfTraverse[i];
             }
-            for (int i = crosspoint2; i < NmbrOfCities; i++)
+            for (int i = crosspoint2; i < NmbrOfLandmarks; i++)
             {
                 offspring1.OrderOfTraverse[i] = this.OrderOfTraverse[i];
                 offspring2.OrderOfTraverse[i] = parent2.OrderOfTraverse[i];
@@ -131,7 +130,7 @@ namespace TravelingSalesmanGeneticAlgorithm
                     }
                     if (!isFound)
                     {
-                        for (int j = crosspoint2; j < NmbrOfCities; j++)
+                        for (int j = crosspoint2; j < NmbrOfLandmarks; j++)
                         {
                             if (!offspring1.Exists(parent2.OrderOfTraverse[j]))
                             {
@@ -160,7 +159,7 @@ namespace TravelingSalesmanGeneticAlgorithm
                     }
                     if (!isFound)
                     {
-                        for (int j = crosspoint2; j < NmbrOfCities; j++)
+                        for (int j = crosspoint2; j < NmbrOfLandmarks; j++)
                         {
                             if (!offspring2.Exists(this.OrderOfTraverse[j]))
                             {
@@ -176,10 +175,21 @@ namespace TravelingSalesmanGeneticAlgorithm
 
         public void PrintPath()
         {
-            for (int i = 0; i < this.NmbrOfCities; i++)
+            double sumOfDistance = 0.0;
+            for (int i = 0; i < this.NmbrOfLandmarks - 1; i++)
             {
-                Console.Write(this.OrderOfTraverse[i] + "->");
+                double distance = this.Landmarks[this.OrderOfTraverse[i]].GetDistanceTo(this.Landmarks[this.OrderOfTraverse[i + 1]]);
+                sumOfDistance += distance;
+                distance = Math.Round(distance, 2);
+                Console.Write(this.Landmarks[this.OrderOfTraverse[i]].Name + "-[" + 
+                    distance.ToString() + "]->");
             }
+            double distance2 = this.Landmarks[this.OrderOfTraverse[this.NmbrOfLandmarks - 1]].GetDistanceTo(this.Landmarks[this.OrderOfTraverse[0]]);
+            sumOfDistance += distance2;
+            sumOfDistance = Math.Round(sumOfDistance, 3);
+            Console.WriteLine(this.Landmarks[this.OrderOfTraverse[this.NmbrOfLandmarks - 1]].Name + "-[" +
+                    distance2.ToString() + "]->" + this.Landmarks[this.OrderOfTraverse[0]].Name);
+            Console.WriteLine("Length of path: " + sumOfDistance);
         }
     }
 }
